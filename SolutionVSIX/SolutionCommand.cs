@@ -22,13 +22,13 @@ namespace SolutionVSIX
         /// <summary>
         /// Command ID.
         /// </summary>
-        public const int CommandId = 0x0100;
+        public const int OpenFoowwDebugID = 0x0100;
+        public const int OpenFoowwTodayLogID = 0x0101;
 
         /// <summary>
         /// Command menu group (command set GUID).
         /// </summary>
         public static readonly Guid CommandSet = new Guid("ca807c56-c7e2-4e05-8b23-cc42d6163252");
-
         /// <summary>
         /// VS Package that provides this command, not null.
         /// </summary>
@@ -45,9 +45,14 @@ namespace SolutionVSIX
             this.package = package ?? throw new ArgumentNullException(nameof(package));
             commandService = commandService ?? throw new ArgumentNullException(nameof(commandService));
 
-            var menuCommandID = new CommandID(CommandSet, CommandId);
-            var menuItem = new MenuCommand(this.Execute, menuCommandID);
-            commandService.AddCommand(menuItem);
+            var menuOpenFoowwDebugID = new CommandID(CommandSet, OpenFoowwDebugID);
+            var menuOpenFoowwDebug = new MenuCommand(this.OpenFoowwDebug, menuOpenFoowwDebugID);
+            commandService.AddCommand(menuOpenFoowwDebug);
+
+            var menuOpenFoowwTodayLogID = new CommandID(CommandSet, OpenFoowwTodayLogID);
+            var menuOpenFoowwTodayLog = new MenuCommand(this.OpenFoowwTodayLog, menuOpenFoowwTodayLogID);
+            commandService.AddCommand(menuOpenFoowwTodayLog);
+
         }
 
         /// <summary>
@@ -91,10 +96,26 @@ namespace SolutionVSIX
         /// </summary>
         /// <param name="sender">Event sender.</param>
         /// <param name="e">Event args.</param>
-        private void Execute(object sender, EventArgs e)
+        private void OpenFoowwDebug(object sender, EventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            string message = string.Format(CultureInfo.CurrentCulture, "Inside {0}.MenuItemCallback()", this.GetType().FullName);
+            string message = string.Format(CultureInfo.CurrentCulture, "Inside {0}.OpenFoowwDebug()", this.GetType().FullName);
+            string title = "SolutionCommand";
+
+            // Show a message box to prove we were here
+            VsShellUtilities.ShowMessageBox(
+                this.package,
+                message,
+                title,
+                OLEMSGICON.OLEMSGICON_INFO,
+                OLEMSGBUTTON.OLEMSGBUTTON_OK,
+                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+        }
+
+        private void OpenFoowwTodayLog(object sender, EventArgs e)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            string message = string.Format(CultureInfo.CurrentCulture, "Inside {0}.OpenFoowwTodayLog()", this.GetType().FullName);
             string title = "SolutionCommand";
 
             // Show a message box to prove we were here
