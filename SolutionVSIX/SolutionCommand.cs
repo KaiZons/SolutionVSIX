@@ -24,6 +24,10 @@ namespace SolutionVSIX
         /// </summary>
         public const int OpenFoowwDebugID = 0x0100;
         public const int OpenFoowwTodayLogID = 0x0101;
+        public const int OpenFoowwLocalDatabaseID = 0x0102;
+        public const int OpenFoowwLocalLargeDatabaseID = 0x0103;
+        public const int ChangeFoowwEnvironmentToFormal = 0x0104;
+        public const int ChangeFoowwEnvironmentToTest = 0x0105;
 
         /// <summary>
         /// Command menu group (command set GUID).
@@ -34,6 +38,8 @@ namespace SolutionVSIX
         /// </summary>
         private readonly AsyncPackage package;
 
+        private readonly OleMenuCommandService m_commandService;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="SolutionCommand"/> class.
         /// Adds our command handlers for menu (commands must exist in the command table file)
@@ -43,16 +49,16 @@ namespace SolutionVSIX
         private SolutionCommand(AsyncPackage package, OleMenuCommandService commandService)
         {
             this.package = package ?? throw new ArgumentNullException(nameof(package));
-            commandService = commandService ?? throw new ArgumentNullException(nameof(commandService));
+            m_commandService = commandService ?? throw new ArgumentNullException(nameof(commandService));
+            AddCommand(OpenFoowwDebugID, this.OpenFoowwDebug);
+            AddCommand(OpenFoowwTodayLogID, this.OpenFoowwTodayLog);
+        }
 
-            var menuOpenFoowwDebugID = new CommandID(CommandSet, OpenFoowwDebugID);
-            var menuOpenFoowwDebug = new MenuCommand(this.OpenFoowwDebug, menuOpenFoowwDebugID);
-            commandService.AddCommand(menuOpenFoowwDebug);
-
-            var menuOpenFoowwTodayLogID = new CommandID(CommandSet, OpenFoowwTodayLogID);
-            var menuOpenFoowwTodayLog = new MenuCommand(this.OpenFoowwTodayLog, menuOpenFoowwTodayLogID);
-            commandService.AddCommand(menuOpenFoowwTodayLog);
-
+        private void AddCommand(int commandID, EventHandler handler)
+        {
+            var menuCommandID = new CommandID(CommandSet, commandID);
+            var menuCommand = new MenuCommand(handler, menuCommandID);
+            m_commandService.AddCommand(menuCommand);
         }
 
         /// <summary>
