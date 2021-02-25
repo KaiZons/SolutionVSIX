@@ -1,10 +1,12 @@
-﻿using System;
-using System.ComponentModel.Design;
-using System.Globalization;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using EnvDTE;
+using EnvDTE80;
+using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using System;
+using System.ComponentModel.Design;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 using Task = System.Threading.Tasks.Task;
 
 namespace SolutionVSIX
@@ -13,6 +15,8 @@ namespace SolutionVSIX
      * https://docs.microsoft.com/en-us/visualstudio/extensibility/internals/how-vspackages-add-user-interface-elements?view=vs-2019
      * https://docs.microsoft.com/zh-cn/visualstudio/extensibility/creating-an-extension-with-a-menu-command?view=vs-2019
      * https://docs.microsoft.com/en-us/visualstudio/extensibility/adding-a-menu-to-the-visual-studio-menu-bar?view=vs-2019
+     * https://docs.microsoft.com/zh-cn/visualstudio/extensibility/getting-project-properties?view=vs-2019
+     * 
      */
     /// <summary>
     /// Command handler
@@ -105,33 +109,36 @@ namespace SolutionVSIX
         private void OpenFoowwDebug(object sender, EventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            string message = string.Format(CultureInfo.CurrentCulture, "Inside {0}.OpenFoowwDebug()", this.GetType().FullName);
-            string title = "SolutionCommand";
-
-            // Show a message box to prove we were here
-            VsShellUtilities.ShowMessageBox(
-                this.package,
-                message,
-                title,
-                OLEMSGICON.OLEMSGICON_INFO,
-                OLEMSGBUTTON.OLEMSGBUTTON_OK,
-                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+            Project project = GetVSCurrentProject();
+            
         }
 
         private void OpenFoowwTodayLog(object sender, EventArgs e)
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            string message = string.Format(CultureInfo.CurrentCulture, "Inside {0}.OpenFoowwTodayLog()", this.GetType().FullName);
-            string title = "SolutionCommand";
+            ThreadHelper.ThrowIfNotOnUIThread(); 
+            DTE dte = (DTE)this.package.GetServiceAsync(typeof(DTE)).Result;
+            Projects projects = dte.Solution.Projects;
+            foreach (Project pro in projects)
+            { 
+                
+            }
+            Project project = projects.Item(1);
+        }
 
-            // Show a message box to prove we were here
-            VsShellUtilities.ShowMessageBox(
-                this.package,
-                message,
-                title,
-                OLEMSGICON.OLEMSGICON_INFO,
-                OLEMSGBUTTON.OLEMSGBUTTON_OK,
-                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+        private Project GetVSCurrentProject()
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            Task<object> serviceTask = this.package.GetServiceAsync(typeof(SVsSolutionBuildManager));
+            var StartBuid = (IVsSolutionBuildManager2)serviceTask.Result;
+            StartBuid.get_StartupProject(out IVsHierarchy startupProject);
+            if (startupProject == null)
+            {
+                MessageBox.Show("未检测到启动项，请确保是否已打开解决方案");
+                return null;
+            }
+            //StartBuid.StartUpdateProjectConfigurations(1, new[] { startupProject }, (uint)VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_BUILD, 0);//编译
+            startupProject.GetProperty((uint)VSConstants.VSITEMID.Root, (int)__VSHPROPID.VSHPROPID_ExtObject, out var obj);
+            return obj as Project;
         }
     }
 }

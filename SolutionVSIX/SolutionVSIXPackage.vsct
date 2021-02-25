@@ -15,10 +15,10 @@
         defining some of the constants that we will use inside the file. -->
 
   <!--This is the file that defines the IDs for all the commands exposed by VisualStudio. -->
-  <Extern href="stdidcmd.h"/>
+  <Extern href="stdidcmd.h" />
 
   <!--This header contains the command ids for the menus provided by the shell. -->
-  <Extern href="vsshlids.h"/>
+  <Extern href="vsshlids.h" />
 
   <!--The Commands section is where commands, menus, and menu groups are defined.
       This section uses a Guid to identify the package that provides the command defined inside it. -->
@@ -37,7 +37,7 @@
          must be a menu. -->
     <Groups>
       <Group guid="guidSolutionVSIXPackageCmdSet" id="MyMenuGroup" priority="0x0600">
-        <Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS"/>
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS" />
       </Group>
     </Groups>
 
@@ -103,8 +103,8 @@
             bitmap strip containing the bitmaps and then there are the numeric ids of the elements used
             inside a button definition. An important aspect of this declaration is that the element id
             must be the actual index (1-based) of the bitmap inside the bitmap strip. -->
-      <Bitmap guid="guidImages" href="Resources\SolutionCommand.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough"/>
-      <Bitmap guid="foowwIcon" href="Resources\Fooww.png" usedList="foowwIcon1"/>
+      <Bitmap guid="guidImages" href="Resources\SolutionCommand.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
+      <Bitmap guid="foowwIcon" href="Resources\Fooww.png" usedList="foowwIcon1" />
     </Bitmaps>
   </Commands>
 
@@ -121,9 +121,10 @@
       <IDSymbol name="OpenFoowwLocalLargeDatabase" value="0x0103" />
       <IDSymbol name="ChangeFoowwEnvironmentToFormal" value="0x0104" />
       <IDSymbol name="ChangeFoowwEnvironmentToTest" value="0x0105" />
+      <IDSymbol value="4129" name="cmdidProjectPropertiesToolWindowCommand" />
     </GuidSymbol>
 
-    <GuidSymbol name="guidImages" value="{678b368c-4bfe-482f-9365-a16025e1ff50}" >
+    <GuidSymbol name="guidImages" value="{678b368c-4bfe-482f-9365-a16025e1ff50}">
       <IDSymbol name="bmpPic1" value="1" />
       <IDSymbol name="bmpPic2" value="2" />
       <IDSymbol name="bmpPicSearch" value="3" />
