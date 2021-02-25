@@ -4,8 +4,10 @@ using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using EnvDTE;
 using EnvDTE80;
+using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Task = System.Threading.Tasks.Task;
@@ -129,17 +131,18 @@ namespace SolutionVSIX
         private void OpenFoowwTodayLog(object sender, EventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            string message = string.Format(CultureInfo.CurrentCulture, "Inside {0}.OpenFoowwTodayLog()", this.GetType().FullName);
-            string title = "SolutionCommand";
-
-            // Show a message box to prove we were here
-            VsShellUtilities.ShowMessageBox(
-                this.package,
-                message,
-                title,
-                OLEMSGICON.OLEMSGICON_INFO,
-                OLEMSGBUTTON.OLEMSGBUTTON_OK,
-                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+            ThreadHelper.ThrowIfNotOnUIThread();
+            Task<object> serviceTask = this.package.GetServiceAsync(typeof(SVsSolutionBuildManager));
+            var StartBuid = (IVsSolutionBuildManager2)serviceTask.Result;
+            StartBuid.get_StartupProject(out IVsHierarchy startupProject);
+            if (startupProject == null)
+            {
+                MessageBox.Show("未检测到启动项，请确保是否已打开解决方案");
+                return;
+            }
+            //StartBuid.StartUpdateProjectConfigurations(1, new[] { startupProject }, (uint)VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_BUILD, 0);//编译
+            startupProject.GetProperty((uint)VSConstants.VSITEMID.Root, (int)__VSHPROPID.VSHPROPID_ExtObject, out var obj);
+            Project project = obj as Project;
         }
 
         private void OpenFoowwLocalDatabase(object sender, EventArgs e)
