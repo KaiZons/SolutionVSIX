@@ -59,11 +59,11 @@
           <ButtonText>打开解决方案Debug目录</ButtonText>
         </Strings>
       </Button>
-      <Button guid="guidSolutionVSIXPackageCmdSet" id="OpenFoowwTodayLog" priority="0x0101" type="Button">
+      <Button guid="guidSolutionVSIXPackageCmdSet" id="OpenFoowwLog" priority="0x0101" type="Button">
         <Parent guid="guidSolutionVSIXPackageCmdSet" id="MyMenuGroup" />
         <Icon guid="foowwIcon" id="foowwIcon1" />
         <Strings>
-          <ButtonText>打开梵讯今日Log</ButtonText>
+          <ButtonText>打开梵讯Log</ButtonText>
         </Strings>
       </Button>
       <Button guid="guidSolutionVSIXPackageCmdSet" id="OpenFoowwLocalDatabase" priority="0x0102" type="Button">
@@ -84,14 +84,14 @@
         <Parent guid="guidSolutionVSIXPackageCmdSet" id="MyMenuGroup" />
         <Icon guid="foowwIcon" id="foowwIcon1" />
         <Strings>
-          <ButtonText>正式环境运行梵讯</ButtonText>
+          <ButtonText>切换成梵讯正式环境</ButtonText>
         </Strings>
       </Button>
       <Button guid="guidSolutionVSIXPackageCmdSet" id="ChangeFoowwEnvironmentToTest" priority="0x0105" type="Button">
         <Parent guid="guidSolutionVSIXPackageCmdSet" id="MyMenuGroup" />
         <Icon guid="foowwIcon" id="foowwIcon1" />
         <Strings>
-          <ButtonText>测试环境运行梵讯</ButtonText>
+          <ButtonText>切换成梵讯测试环境</ButtonText>
         </Strings>
       </Button>
     </Buttons>
@@ -116,7 +116,7 @@
     <GuidSymbol name="guidSolutionVSIXPackageCmdSet" value="{ca807c56-c7e2-4e05-8b23-cc42d6163252}">
       <IDSymbol name="MyMenuGroup" value="0x1020" />
       <IDSymbol name="OpenFoowwDebug" value="0x0100" />
-      <IDSymbol name="OpenFoowwTodayLog" value="0x0101" />
+      <IDSymbol name="OpenFoowwLog" value="0x0101" />
       <IDSymbol name="OpenFoowwLocalDatabase" value="0x0102" />
       <IDSymbol name="OpenFoowwLocalLargeDatabase" value="0x0103" />
       <IDSymbol name="ChangeFoowwEnvironmentToFormal" value="0x0104" />

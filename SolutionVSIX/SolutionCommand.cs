@@ -1,7 +1,9 @@
 ﻿using System;
 using System.ComponentModel.Design;
+using System.Configuration;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -10,6 +12,8 @@ using EnvDTE80;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using Configuration = System.Configuration.Configuration;
+using ConfigurationManager = System.Configuration.ConfigurationManager;
 using Task = System.Threading.Tasks.Task;
 
 namespace SolutionVSIX
@@ -28,7 +32,7 @@ namespace SolutionVSIX
         /// Command ID.
         /// </summary>
         public const int OpenFoowwDebugID = 0x0100;
-        public const int OpenFoowwTodayLogID = 0x0101;
+        public const int OpenFoowwLogID = 0x0101;
         public const int OpenFoowwLocalDatabaseID = 0x0102;
         public const int OpenFoowwLocalLargeDatabaseID = 0x0103;
         public const int ChangeFoowwEnvironmentToFormalID = 0x0104;
@@ -56,7 +60,7 @@ namespace SolutionVSIX
             this.package = package ?? throw new ArgumentNullException(nameof(package));
             m_commandService = commandService ?? throw new ArgumentNullException(nameof(commandService));
             AddCommand(OpenFoowwDebugID, this.OpenFoowwDebug);
-            AddCommand(OpenFoowwTodayLogID, this.OpenFoowwTodayLog);
+            AddCommand(OpenFoowwLogID, this.OpenFoowwLog);
             AddCommand(OpenFoowwLocalDatabaseID, this.OpenFoowwLocalDatabase);
             AddCommand(OpenFoowwLocalLargeDatabaseID, this.OpenFoowwLocalLargeDatabase);
             AddCommand(ChangeFoowwEnvironmentToFormalID, this.ChangeFoowwEnvironmentToFormal);
@@ -114,23 +118,119 @@ namespace SolutionVSIX
         private void OpenFoowwDebug(object sender, EventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-
-            var dte2 = Package.GetGlobalService(typeof(DTE)) as DTE2;
-            var solution = dte2.Solution;
-
-            var projects = (UIHierarchyItem[])dte2?.ToolWindows.SolutionExplorer.SelectedItems;
-            var project = projects[0].Object as Project;
-
-
-            var SolutionName = Path.GetFileName(solution.FullName);//解决方案名称
-            var SolutionDir = Path.GetDirectoryName(solution.FullName);//解决方案路径
-            var ProjectName = Path.GetFileName(project.FullName);//项目名称
-            var ProjectDir = Path.GetDirectoryName(project.FullName);//项目路径
+            Project project = GetStartupProject();
+            if (project == null)
+            {
+                return;
+            }
+            FileInfo file = new FileInfo(project.FileName);
+            System.Diagnostics.Process.Start("explorer.exe", file.DirectoryName + @"\bin\x86\Debug");
         }
 
-        private void OpenFoowwTodayLog(object sender, EventArgs e)
+        private void OpenFoowwLog(object sender, EventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
+            Project project = GetStartupProject();
+            if (project == null)
+            {
+                return;
+            }
+            FileInfo file = new FileInfo(project.FileName);
+            System.Diagnostics.Process.Start("explorer.exe", file.DirectoryName + @"\bin\x86\Debug\Logs\");
+        }
+
+        private void OpenFoowwLocalDatabase(object sender, EventArgs e)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            Project project = GetStartupProject();
+            if (project == null)
+            {
+                return;
+            }
+            FileInfo file = new FileInfo(project.FileName);
+            System.Diagnostics.Process.Start(file.DirectoryName + @"\bin\x86\Debug\FoowwCE.sdf");
+        }
+
+        private void OpenFoowwLocalLargeDatabase(object sender, EventArgs e)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            Project project = GetStartupProject();
+            if (project == null)
+            {
+                return;
+            }
+            FileInfo file = new FileInfo(project.FileName);
+            System.Diagnostics.Process.Start(file.DirectoryName + @"\bin\x86\Debug\FoowwCELarge.sdf");
+        }
+
+        private void ChangeFoowwEnvironmentToFormal(object sender, EventArgs e)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            Project project = GetStartupProject();
+            if (project == null)
+            {
+                return;
+            }
+            FileInfo file = new FileInfo(project.FileName);
+            string appConfigPath = file.DirectoryName + @"\app.config";
+            string environmentNode = "Environment";
+            ExeConfigurationFileMap configMap = new ExeConfigurationFileMap();
+            configMap.ExeConfigFilename = appConfigPath;
+            Configuration appConfig = ConfigurationManager.OpenMappedExeConfiguration(configMap, ConfigurationUserLevel.None);
+            // 没有配置，默认正式
+            if (!appConfig.AppSettings.Settings.AllKeys.Contains(environmentNode))
+            {
+                return;
+            }
+
+            // 配置是test，则需要改为正式
+            string value = appConfig.AppSettings.Settings[environmentNode].Value;
+            if (value.ToLower() == "test")
+            {
+                appConfig.AppSettings.Settings[environmentNode].Value = value + "1";
+                appConfig.Save(ConfigurationSaveMode.Modified);
+                //使connectionStrings配置节缓存失效，下次必须从磁盘读取
+                ConfigurationManager.RefreshSection("appSettings");
+            }
+        }
+
+        private void ChangeFoowwEnvironmentToTest(object sender, EventArgs e)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            Project project = GetStartupProject();
+            if (project == null)
+            {
+                return;
+            }
+            FileInfo file = new FileInfo(project.FileName);
+            string appConfigPath = file.DirectoryName + @"\app.config";
+            string environmentNode = "Environment";
+            ExeConfigurationFileMap configMap = new ExeConfigurationFileMap();
+            configMap.ExeConfigFilename = appConfigPath;
+            Configuration appConfig = ConfigurationManager.OpenMappedExeConfiguration(configMap, ConfigurationUserLevel.None);
+            // 没有配置，需要新增测试环境配置
+            if (!appConfig.AppSettings.Settings.AllKeys.Contains(environmentNode))
+            {
+                appConfig.AppSettings.Settings.Add(environmentNode, "Test");
+                appConfig.Save(ConfigurationSaveMode.Modified);
+                //使connectionStrings配置节缓存失效，下次必须从磁盘读取
+                ConfigurationManager.RefreshSection("appSettings");
+                return;
+            }
+
+            // 否则改为测试
+            string value = appConfig.AppSettings.Settings[environmentNode].Value;
+            if (value.ToLower() != "test")
+            {
+                appConfig.AppSettings.Settings[environmentNode].Value = "Test";
+                appConfig.Save(ConfigurationSaveMode.Modified);
+                //使connectionStrings配置节缓存失效，下次必须从磁盘读取
+                ConfigurationManager.RefreshSection("appSettings");
+            }
+        }
+
+        private Project GetStartupProject()
+        {
             ThreadHelper.ThrowIfNotOnUIThread();
             Task<object> serviceTask = this.package.GetServiceAsync(typeof(SVsSolutionBuildManager));
             var StartBuid = (IVsSolutionBuildManager2)serviceTask.Result;
@@ -138,75 +238,28 @@ namespace SolutionVSIX
             if (startupProject == null)
             {
                 MessageBox.Show("未检测到启动项，请确保是否已打开解决方案");
-                return;
+                return null;
             }
             //StartBuid.StartUpdateProjectConfigurations(1, new[] { startupProject }, (uint)VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_BUILD, 0);//编译
             startupProject.GetProperty((uint)VSConstants.VSITEMID.Root, (int)__VSHPROPID.VSHPROPID_ExtObject, out var obj);
             Project project = obj as Project;
+            return project;
         }
 
-        private void OpenFoowwLocalDatabase(object sender, EventArgs e)
+        private void GetAllProjects()
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            string message = string.Format(CultureInfo.CurrentCulture, "Inside {0}.OpenFoowwTodayLog()", this.GetType().FullName);
-            string title = "SolutionCommand";
+            // 获取所有项目
+            //var dte2 = Package.GetGlobalService(typeof(DTE)) as DTE2;
+            //var solution = dte2.Solution;
 
-            // Show a message box to prove we were here
-            VsShellUtilities.ShowMessageBox(
-                this.package,
-                message,
-                title,
-                OLEMSGICON.OLEMSGICON_INFO,
-                OLEMSGBUTTON.OLEMSGBUTTON_OK,
-                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
-        }
+            //var projects = (UIHierarchyItem[])dte2?.ToolWindows.SolutionExplorer.SelectedItems;
+            //var project = projects[0].Object as Project;
 
-        private void OpenFoowwLocalLargeDatabase(object sender, EventArgs e)
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            string message = string.Format(CultureInfo.CurrentCulture, "Inside {0}.OpenFoowwTodayLog()", this.GetType().FullName);
-            string title = "SolutionCommand";
 
-            // Show a message box to prove we were here
-            VsShellUtilities.ShowMessageBox(
-                this.package,
-                message,
-                title,
-                OLEMSGICON.OLEMSGICON_INFO,
-                OLEMSGBUTTON.OLEMSGBUTTON_OK,
-                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
-        }
-
-        private void ChangeFoowwEnvironmentToFormal(object sender, EventArgs e)
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            string message = string.Format(CultureInfo.CurrentCulture, "Inside {0}.OpenFoowwTodayLog()", this.GetType().FullName);
-            string title = "SolutionCommand";
-
-            // Show a message box to prove we were here
-            VsShellUtilities.ShowMessageBox(
-                this.package,
-                message,
-                title,
-                OLEMSGICON.OLEMSGICON_INFO,
-                OLEMSGBUTTON.OLEMSGBUTTON_OK,
-                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
-        }
-
-        private void ChangeFoowwEnvironmentToTest(object sender, EventArgs e)
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            string message = string.Format(CultureInfo.CurrentCulture, "Inside {0}.OpenFoowwTodayLog()", this.GetType().FullName);
-            string title = "SolutionCommand";
-
-            // Show a message box to prove we were here
-            VsShellUtilities.ShowMessageBox(
-                this.package,
-                message,
-                title,
-                OLEMSGICON.OLEMSGICON_INFO,
-                OLEMSGBUTTON.OLEMSGBUTTON_OK,
-                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+            //var SolutionName = Path.GetFileName(solution.FullName);//解决方案名称
+            //var SolutionDir = Path.GetDirectoryName(solution.FullName);//解决方案路径
+            //var ProjectName = Path.GetFileName(project.FullName);//项目名称
+            //var ProjectDir = Path.GetDirectoryName(project.FullName);//项目路径
         }
     }
 }
