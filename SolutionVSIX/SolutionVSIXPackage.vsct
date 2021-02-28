@@ -66,28 +66,28 @@
           <ButtonText>打开梵讯Log</ButtonText>
         </Strings>
       </Button>
-      <Button guid="guidSolutionVSIXPackageCmdSet" id="OpenFoowwLocalDatabase" priority="0x0102" type="Button">
+      <Button guid="guidSolutionVSIXPackageCmdSet" id="OpenFoowwLocalDatabase" priority="0x0001" type="Button">
         <Parent guid="guidSolutionVSIXPackageCmdSet" id="MyMenuGroup" />
         <Icon guid="foowwIcon" id="foowwIcon1" />
         <Strings>
           <ButtonText>打开梵讯本地数据库</ButtonText>
         </Strings>
       </Button>
-      <Button guid="guidSolutionVSIXPackageCmdSet" id="OpenFoowwLocalLargeDatabase" priority="0x0103" type="Button">
+      <Button guid="guidSolutionVSIXPackageCmdSet" id="OpenFoowwLocalLargeDatabase" priority="0x0002" type="Button">
         <Parent guid="guidSolutionVSIXPackageCmdSet" id="MyMenuGroup" />
         <Icon guid="foowwIcon" id="foowwIcon1" />
         <Strings>
           <ButtonText>打开梵讯本地Large数据库</ButtonText>
         </Strings>
       </Button>
-      <Button guid="guidSolutionVSIXPackageCmdSet" id="ChangeFoowwEnvironmentToFormal" priority="0x0104" type="Button">
+      <Button guid="guidSolutionVSIXPackageCmdSet" id="ChangeFoowwEnvironmentToFormal" priority="0x0003" type="Button">
         <Parent guid="guidSolutionVSIXPackageCmdSet" id="MyMenuGroup" />
         <Icon guid="foowwIcon" id="foowwIcon1" />
         <Strings>
           <ButtonText>切换成梵讯正式环境</ButtonText>
         </Strings>
       </Button>
-      <Button guid="guidSolutionVSIXPackageCmdSet" id="ChangeFoowwEnvironmentToTest" priority="0x0105" type="Button">
+      <Button guid="guidSolutionVSIXPackageCmdSet" id="ChangeFoowwEnvironmentToTest" priority="0x0004" type="Button">
         <Parent guid="guidSolutionVSIXPackageCmdSet" id="MyMenuGroup" />
         <Icon guid="foowwIcon" id="foowwIcon1" />
         <Strings>
