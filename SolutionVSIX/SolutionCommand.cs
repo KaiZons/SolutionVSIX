@@ -19,6 +19,8 @@ using Task = System.Threading.Tasks.Task;
 namespace SolutionVSIX
 {
     /*
+     * 要调试，需要在vs中，选择调试-选项-常规中的使用托管兼容模式勾选。
+     * 
      * https://docs.microsoft.com/en-us/visualstudio/extensibility/internals/how-vspackages-add-user-interface-elements?view=vs-2019
      * https://docs.microsoft.com/zh-cn/visualstudio/extensibility/creating-an-extension-with-a-menu-command?view=vs-2019
      * https://docs.microsoft.com/en-us/visualstudio/extensibility/adding-a-menu-to-the-visual-studio-menu-bar?view=vs-2019
