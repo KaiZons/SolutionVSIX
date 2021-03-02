@@ -52,20 +52,6 @@
               <CommandFlag>DefaultInvisible</CommandFlag>
               <CommandFlag>DynamicVisibility</CommandFlag>
           If you do not want an image next to your command, remove the Icon node /> -->
-      <Button guid="guidSolutionVSIXPackageCmdSet" id="OpenFoowwDebug" priority="0x0100" type="Button">
-        <Parent guid="guidSolutionVSIXPackageCmdSet" id="MyMenuGroup" />
-        <Icon guid="foowwIcon" id="foowwIcon1" />
-        <Strings>
-          <ButtonText>打开解决方案Debug目录</ButtonText>
-        </Strings>
-      </Button>
-      <Button guid="guidSolutionVSIXPackageCmdSet" id="OpenFoowwLog" priority="0x0101" type="Button">
-        <Parent guid="guidSolutionVSIXPackageCmdSet" id="MyMenuGroup" />
-        <Icon guid="foowwIcon" id="foowwIcon1" />
-        <Strings>
-          <ButtonText>打开梵讯Log</ButtonText>
-        </Strings>
-      </Button>
       <Button guid="guidSolutionVSIXPackageCmdSet" id="OpenFoowwLocalDatabase" priority="0x0001" type="Button">
         <Parent guid="guidSolutionVSIXPackageCmdSet" id="MyMenuGroup" />
         <Icon guid="foowwIcon" id="foowwIcon1" />
@@ -92,6 +78,27 @@
         <Icon guid="foowwIcon" id="foowwIcon1" />
         <Strings>
           <ButtonText>切换成梵讯测试环境</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidSolutionVSIXPackageCmdSet" id="ReplaceFoowwDatabase" priority="0x0105" type="Button">
+        <Parent guid="guidSolutionVSIXPackageCmdSet" id="MyMenuGroup" />
+        <Icon guid="foowwIcon" id="foowwIcon1" />
+        <Strings>
+          <ButtonText>替换空白数据库</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidSolutionVSIXPackageCmdSet" id="OpenFoowwDebug" priority="0x0100" type="Button">
+        <Parent guid="guidSolutionVSIXPackageCmdSet" id="MyMenuGroup" />
+        <Icon guid="foowwIcon" id="foowwIcon1" />
+        <Strings>
+          <ButtonText>打开解决方案Debug目录</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidSolutionVSIXPackageCmdSet" id="OpenFoowwLog" priority="0x0101" type="Button">
+        <Parent guid="guidSolutionVSIXPackageCmdSet" id="MyMenuGroup" />
+        <Icon guid="foowwIcon" id="foowwIcon1" />
+        <Strings>
+          <ButtonText>打开梵讯Log</ButtonText>
         </Strings>
       </Button>
     </Buttons>
@@ -121,6 +128,7 @@
       <IDSymbol name="OpenFoowwLocalLargeDatabase" value="0x0103" />
       <IDSymbol name="ChangeFoowwEnvironmentToFormal" value="0x0104" />
       <IDSymbol name="ChangeFoowwEnvironmentToTest" value="0x0105" />
+      <IDSymbol name="ReplaceFoowwDatabase" value="0x0106" />
       <IDSymbol value="4129" name="cmdidProjectPropertiesToolWindowCommand" />
     </GuidSymbol>
 

@@ -4,6 +4,8 @@ using System.Configuration;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -39,6 +41,7 @@ namespace SolutionVSIX
         public const int OpenFoowwLocalLargeDatabaseID = 0x0103;
         public const int ChangeFoowwEnvironmentToFormalID = 0x0104;
         public const int ChangeFoowwEnvironmentToTestID = 0x0105;
+        public const int ReplaceFoowwDatabaseID = 0x0106;
 
         /// <summary>
         /// Command menu group (command set GUID).
@@ -67,6 +70,7 @@ namespace SolutionVSIX
             AddCommand(OpenFoowwLocalLargeDatabaseID, this.OpenFoowwLocalLargeDatabase);
             AddCommand(ChangeFoowwEnvironmentToFormalID, this.ChangeFoowwEnvironmentToFormal);
             AddCommand(ChangeFoowwEnvironmentToTestID, this.ChangeFoowwEnvironmentToTest);
+            AddCommand(ReplaceFoowwDatabaseID, this.ReplaceFoowwDatabase);
         }
 
         private void AddCommand(int commandID, EventHandler handler)
@@ -120,61 +124,31 @@ namespace SolutionVSIX
         private void OpenFoowwDebug(object sender, EventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            Project project = GetStartupProject();
-            if (project == null)
-            {
-                return;
-            }
-            FileInfo file = new FileInfo(project.FileName);
-            System.Diagnostics.Process.Start("explorer.exe", file.DirectoryName + @"\bin\x86\Debug");
+            System.Diagnostics.Process.Start("explorer.exe", GetStartupProjectDirectoryPath() + @"\bin\x86\Debug");
         }
 
         private void OpenFoowwLog(object sender, EventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            Project project = GetStartupProject();
-            if (project == null)
-            {
-                return;
-            }
-            FileInfo file = new FileInfo(project.FileName);
-            System.Diagnostics.Process.Start("explorer.exe", file.DirectoryName + @"\bin\x86\Debug\Logs\");
+            System.Diagnostics.Process.Start("explorer.exe", GetStartupProjectDirectoryPath() + @"\bin\x86\Debug\Logs\");
         }
 
         private void OpenFoowwLocalDatabase(object sender, EventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            Project project = GetStartupProject();
-            if (project == null)
-            {
-                return;
-            }
-            FileInfo file = new FileInfo(project.FileName);
-            System.Diagnostics.Process.Start(file.DirectoryName + @"\bin\x86\Debug\FoowwCE.sdf");
+            System.Diagnostics.Process.Start(GetStartupProjectDirectoryPath() + @"\bin\x86\Debug\FoowwCE.sdf");
         }
 
         private void OpenFoowwLocalLargeDatabase(object sender, EventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            Project project = GetStartupProject();
-            if (project == null)
-            {
-                return;
-            }
-            FileInfo file = new FileInfo(project.FileName);
-            System.Diagnostics.Process.Start(file.DirectoryName + @"\bin\x86\Debug\FoowwCELarge.sdf");
+            System.Diagnostics.Process.Start(GetStartupProjectDirectoryPath() + @"\bin\x86\Debug\FoowwCELarge.sdf");
         }
 
         private void ChangeFoowwEnvironmentToFormal(object sender, EventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            Project project = GetStartupProject();
-            if (project == null)
-            {
-                return;
-            }
-            FileInfo file = new FileInfo(project.FileName);
-            string appConfigPath = file.DirectoryName + @"\app.config";
+            string appConfigPath = GetStartupProjectDirectoryPath() + @"\app.config";
             string environmentNode = "Environment";
             ExeConfigurationFileMap configMap = new ExeConfigurationFileMap();
             configMap.ExeConfigFilename = appConfigPath;
@@ -199,13 +173,7 @@ namespace SolutionVSIX
         private void ChangeFoowwEnvironmentToTest(object sender, EventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            Project project = GetStartupProject();
-            if (project == null)
-            {
-                return;
-            }
-            FileInfo file = new FileInfo(project.FileName);
-            string appConfigPath = file.DirectoryName + @"\app.config";
+            string appConfigPath = GetStartupProjectDirectoryPath() + @"\app.config";
             string environmentNode = "Environment";
             ExeConfigurationFileMap configMap = new ExeConfigurationFileMap();
             configMap.ExeConfigFilename = appConfigPath;
@@ -231,7 +199,43 @@ namespace SolutionVSIX
             }
         }
 
-        private Project GetStartupProject()
+        private void ReplaceFoowwDatabase(object sender, EventArgs e)
+        {
+            try
+            {
+                ThreadHelper.ThrowIfNotOnUIThread();
+                string debugPath = GetStartupProjectDirectoryPath() + @"\bin\x86\Debug";
+                string tempDirectoryPath = debugPath + @"\FoowwVsixTemp";
+                if (Directory.Exists(tempDirectoryPath))
+                {
+                    Directory.Delete(tempDirectoryPath, true);
+                }
+                Directory.CreateDirectory(tempDirectoryPath);
+                Uri foowwCEUri = new Uri(@"\\lab04\研发部\PC组\梵讯房屋管理系统\v6.670\FoowwCE.sdf");
+                Uri foowwCELargeUri = new Uri(@"\\lab04\研发部\PC组\梵讯房屋管理系统\v6.670\FoowwCELarge.sdf");
+                using (WebClient webClient = new WebClient())
+                {
+                    webClient.DownloadFile(foowwCEUri, tempDirectoryPath + @"\FoowwCE.sdf");
+                    webClient.DownloadFile(foowwCELargeUri, tempDirectoryPath + @"\FoowwCELarge.sdf");
+                }
+
+                DirectoryInfo tempDirectory = new DirectoryInfo(tempDirectoryPath);
+                foreach (FileInfo file in tempDirectory.GetFiles())
+                {
+                    string targetFileName = Path.Combine(debugPath, file.Name);
+                    File.Copy(file.FullName, targetFileName, true);
+                }
+                Directory.Delete(tempDirectoryPath, true);
+                MessageBox.Show("空白数据库替换成功！开始搬砖吧！");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.InnerException.Message + ex.StackTrace + ex.Message);
+            }
+        }
+
+
+        private string GetStartupProjectDirectoryPath()
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             Task<object> serviceTask = this.package.GetServiceAsync(typeof(SVsSolutionBuildManager));
@@ -240,12 +244,16 @@ namespace SolutionVSIX
             if (startupProject == null)
             {
                 MessageBox.Show("未检测到启动项，请确保是否已打开解决方案");
-                return null;
+                throw new Exception("未检测到启动项，请确保是否已打开解决方案");
             }
             //StartBuid.StartUpdateProjectConfigurations(1, new[] { startupProject }, (uint)VSSOLNBUILDUPDATEFLAGS.SBF_OPERATION_BUILD, 0);//编译
             startupProject.GetProperty((uint)VSConstants.VSITEMID.Root, (int)__VSHPROPID.VSHPROPID_ExtObject, out var obj);
             Project project = obj as Project;
-            return project;
+            if (project == null)
+            {
+                throw new Exception("检索启动项异常");
+            }
+            return new FileInfo(project.FileName).DirectoryName;
         }
 
         private void GetAllProjects()
