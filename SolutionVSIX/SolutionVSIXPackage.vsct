@@ -80,7 +80,7 @@
           <ButtonText>切换成梵讯测试环境</ButtonText>
         </Strings>
       </Button>
-      <Button guid="guidSolutionVSIXPackageCmdSet" id="ReplaceFoowwDatabase" priority="0x0105" type="Button">
+      <Button guid="guidSolutionVSIXPackageCmdSet" id="ReplaceFoowwDatabase" priority="0x0005" type="Button">
         <Parent guid="guidSolutionVSIXPackageCmdSet" id="MyMenuGroup" />
         <Icon guid="foowwIcon" id="foowwIcon1" />
         <Strings>

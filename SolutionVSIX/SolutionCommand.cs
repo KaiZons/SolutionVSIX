@@ -211,8 +211,8 @@ namespace SolutionVSIX
                     Directory.Delete(tempDirectoryPath, true);
                 }
                 Directory.CreateDirectory(tempDirectoryPath);
-                Uri foowwCEUri = new Uri(@"\\lab04\研发部\PC组\梵讯房屋管理系统\v6.670\FoowwCE.sdf");
-                Uri foowwCELargeUri = new Uri(@"\\lab04\研发部\PC组\梵讯房屋管理系统\v6.670\FoowwCELarge.sdf");
+                Uri foowwCEUri = new Uri(@"\\lab04\研发部\PC组\梵讯房屋管理系统\软件打包工具\FoowwCE.sdf");
+                Uri foowwCELargeUri = new Uri(@"\\lab04\研发部\PC组\梵讯房屋管理系统\软件打包工具\FoowwCELarge.sdf");
                 using (WebClient webClient = new WebClient())
                 {
                     webClient.DownloadFile(foowwCEUri, tempDirectoryPath + @"\FoowwCE.sdf");
