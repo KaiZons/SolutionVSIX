@@ -26,6 +26,8 @@ namespace SolutionVSIX
      * https://docs.microsoft.com/en-us/visualstudio/extensibility/internals/how-vspackages-add-user-interface-elements?view=vs-2019
      * https://docs.microsoft.com/zh-cn/visualstudio/extensibility/creating-an-extension-with-a-menu-command?view=vs-2019
      * https://docs.microsoft.com/en-us/visualstudio/extensibility/adding-a-menu-to-the-visual-studio-menu-bar?view=vs-2019
+     * 
+     * 扩展安装方式：https://blog.csdn.net/u013986317/article/details/114226288
      */
     /// <summary>
     /// Command handler
