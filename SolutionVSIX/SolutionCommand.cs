@@ -29,6 +29,9 @@ namespace SolutionVSIX
      * 
      * 获取项目启动项目录可参考：https://codeleading.com/article/80471988456/
      * 
+     * 创建输出窗口可参考：https://cloud.tencent.com/developer/article/1402381
+     * https://docs.microsoft.com/zh-cn/visualstudio/extensibility/extending-the-properties-task-list-output-and-options-windows?view=vs-2019
+     * 
      * 扩展安装方式：https://blog.csdn.net/u013986317/article/details/114226288
      */
     /// <summary>
@@ -51,6 +54,8 @@ namespace SolutionVSIX
         /// Command menu group (command set GUID).
         /// </summary>
         public static readonly Guid CommandSet = new Guid("ca807c56-c7e2-4e05-8b23-cc42d6163252");
+
+        public static readonly Guid CustomOutputWindowPane = new Guid("4d564d14-ae50-45b4-a882-4c64d9de1526");
         /// <summary>
         /// VS Package that provides this command, not null.
         /// </summary>
@@ -75,6 +80,9 @@ namespace SolutionVSIX
             AddCommand(ChangeFoowwEnvironmentToFormalID, this.ChangeFoowwEnvironmentToFormal);
             AddCommand(ChangeFoowwEnvironmentToTestID, this.ChangeFoowwEnvironmentToTest);
             AddCommand(ReplaceFoowwDatabaseID, this.ReplaceFoowwDatabase);
+
+            // 创建输出窗口
+            CreatePane(CustomOutputWindowPane, "FoowwSoftLog", true, true);
         }
 
         private void AddCommand(int commandID, EventHandler handler)
@@ -172,6 +180,8 @@ namespace SolutionVSIX
                 //使connectionStrings配置节缓存失效，下次必须从磁盘读取
                 ConfigurationManager.RefreshSection("appSettings");
             }
+
+            OutputText("已切换到正式环境！");
         }
 
         private void ChangeFoowwEnvironmentToTest(object sender, EventArgs e)
@@ -201,6 +211,8 @@ namespace SolutionVSIX
                 //使connectionStrings配置节缓存失效，下次必须从磁盘读取
                 ConfigurationManager.RefreshSection("appSettings");
             }
+
+            OutputText("已切换到测试环境！");
         }
 
         private void ReplaceFoowwDatabase(object sender, EventArgs e)
@@ -230,7 +242,8 @@ namespace SolutionVSIX
                     File.Copy(file.FullName, targetFileName, true);
                 }
                 Directory.Delete(tempDirectoryPath, true);
-                MessageBox.Show("空白数据库替换成功！开始搬砖吧！");
+
+                OutputText("空白库替换成功！");
             }
             catch (Exception ex)
             {
@@ -260,20 +273,46 @@ namespace SolutionVSIX
             return new FileInfo(project.FileName).DirectoryName;
         }
 
-        private void GetAllProjects()
+        /// <summary>
+        /// 创建输出窗体
+        /// </summary>
+        /// <param name="paneGuid">自定义ID</param>
+        /// <param name="title">输出窗口的类型</param>
+        /// <param name="visible">是否最初可见</param>
+        /// <param name="clearWithSolution">关闭解决方案时清空</param>
+        private void CreatePane(Guid paneGuid, string title, bool visible, bool clearWithSolution)
         {
-            // 获取所有项目
-            //var dte2 = Package.GetGlobalService(typeof(DTE)) as DTE2;
-            //var solution = dte2.Solution;
+            ThreadHelper.ThrowIfNotOnUIThread();
 
-            //var projects = (UIHierarchyItem[])dte2?.ToolWindows.SolutionExplorer.SelectedItems;
-            //var project = projects[0].Object as Project;
+            IVsOutputWindow output = (IVsOutputWindow)Package.GetGlobalService(typeof(SVsOutputWindow));
 
+            // Create a new pane.  
+            // 参考：https://docs.microsoft.com/zh-cn/dotnet/api/microsoft.visualstudio.shell.interop.ivsoutputwindow.createpane?view=visualstudiosdk-2019
+            output.CreatePane(
+                ref paneGuid,
+                title,
+                Convert.ToInt32(visible),
+                Convert.ToInt32(clearWithSolution));
+        }
 
-            //var SolutionName = Path.GetFileName(solution.FullName);//解决方案名称
-            //var SolutionDir = Path.GetDirectoryName(solution.FullName);//解决方案路径
-            //var ProjectName = Path.GetFileName(project.FullName);//项目名称
-            //var ProjectDir = Path.GetDirectoryName(project.FullName);//项目路径
+        private void OutputText(string text)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
+            IVsOutputWindow output = (IVsOutputWindow)Package.GetGlobalService(typeof(SVsOutputWindow));
+            output.GetPane(CustomOutputWindowPane, out IVsOutputWindowPane pane);
+
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return;
+            }
+
+            pane.OutputString("-------------------------------------------------------");
+            pane.OutputString("\r\n");
+            pane.OutputString($"Output DateTime:{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}");
+            pane.OutputString("\r\n");
+            pane.OutputString(text);
+            pane.OutputString("\r\n");
         }
     }
 }
