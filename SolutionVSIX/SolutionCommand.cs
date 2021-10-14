@@ -27,6 +27,8 @@ namespace SolutionVSIX
      * https://docs.microsoft.com/zh-cn/visualstudio/extensibility/creating-an-extension-with-a-menu-command?view=vs-2019
      * https://docs.microsoft.com/en-us/visualstudio/extensibility/adding-a-menu-to-the-visual-studio-menu-bar?view=vs-2019
      * 
+     * 获取项目启动项目录可参考：https://codeleading.com/article/80471988456/
+     * 
      * 扩展安装方式：https://blog.csdn.net/u013986317/article/details/114226288
      */
     /// <summary>
@@ -126,7 +128,7 @@ namespace SolutionVSIX
         private void OpenFoowwDebug(object sender, EventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            System.Diagnostics.Process.Start("explorer.exe", GetStartupProjectDirectoryPath() + @"\bin\x86\Debug");
+            System.Diagnostics.Process.Start("explorer.exe", $@"/select,{GetStartupProjectDirectoryPath() + @"\bin\x86\Debug\FoowwSoft.exe"}");
         }
 
         private void OpenFoowwLog(object sender, EventArgs e)
