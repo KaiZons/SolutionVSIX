@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.Configuration;
+using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -32,7 +34,11 @@ namespace SolutionVSIX
      * 创建输出窗口可参考：https://cloud.tencent.com/developer/article/1402381
      * https://docs.microsoft.com/zh-cn/visualstudio/extensibility/extending-the-properties-task-list-output-and-options-windows?view=vs-2019
      * 
+     * 关于各种通知方式的介绍：https://docs.microsoft.com/zh-cn/visualstudio/extensibility/ux-guidelines/notifications-and-progress-for-visual-studio?view=vs-2019
+     * 其中提到“通知”类不允许扩展
+     * 
      * 扩展安装方式：https://blog.csdn.net/u013986317/article/details/114226288
+     * 
      */
     /// <summary>
     /// Command handler
@@ -49,9 +55,11 @@ namespace SolutionVSIX
         public const int ChangeFoowwEnvironmentToFormalID = 0x0104;
         public const int ChangeFoowwEnvironmentToTestID = 0x0105;
         public const int ReplaceFoowwDatabaseID = 0x0106;
+        public const int PrintFoowwLogToOutputWindowID = 0x0107;
+        public const int DisablePrintFoowwLogToOutputWindowID = 0x0108;
 
         /// <summary>
-        /// Command menu group (command set GUID).
+        /// Command menu group (command set GUID). 放到一个组里
         /// </summary>
         public static readonly Guid CommandSet = new Guid("ca807c56-c7e2-4e05-8b23-cc42d6163252");
 
@@ -62,6 +70,8 @@ namespace SolutionVSIX
         private readonly AsyncPackage package;
 
         private readonly OleMenuCommandService m_commandService;
+
+        private FileSystemWatcher m_fileWatcher;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SolutionCommand"/> class.
@@ -80,9 +90,12 @@ namespace SolutionVSIX
             AddCommand(ChangeFoowwEnvironmentToFormalID, this.ChangeFoowwEnvironmentToFormal);
             AddCommand(ChangeFoowwEnvironmentToTestID, this.ChangeFoowwEnvironmentToTest);
             AddCommand(ReplaceFoowwDatabaseID, this.ReplaceFoowwDatabase);
+            AddCommand(PrintFoowwLogToOutputWindowID, this.PrintFoowwLogToOutputWindow);
+            AddCommand(DisablePrintFoowwLogToOutputWindowID, this.DisablePrintFoowwLogToOutputWindow);
 
             // 创建输出窗口
             CreatePane(CustomOutputWindowPane, "FoowwSoftLog", true, true);
+            InitFileWatcher();
         }
 
         private void AddCommand(int commandID, EventHandler handler)
@@ -90,6 +103,28 @@ namespace SolutionVSIX
             var menuCommandID = new CommandID(CommandSet, commandID);
             var menuCommand = new MenuCommand(handler, menuCommandID);
             m_commandService.AddCommand(menuCommand);
+        }
+
+        /// <summary>
+        /// 创建输出窗体
+        /// </summary>
+        /// <param name="paneGuid">自定义ID</param>
+        /// <param name="title">输出窗口的类型</param>
+        /// <param name="visible">是否最初可见</param>
+        /// <param name="clearWithSolution">关闭解决方案时清空</param>
+        private void CreatePane(Guid paneGuid, string title, bool visible, bool clearWithSolution)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
+            IVsOutputWindow output = (IVsOutputWindow)Package.GetGlobalService(typeof(SVsOutputWindow));
+
+            // Create a new pane.  
+            // 参考：https://docs.microsoft.com/zh-cn/dotnet/api/microsoft.visualstudio.shell.interop.ivsoutputwindow.createpane?view=visualstudiosdk-2019
+            output.CreatePane(
+                ref paneGuid,
+                title,
+                Convert.ToInt32(visible),
+                Convert.ToInt32(clearWithSolution));
         }
 
         /// <summary>
@@ -181,7 +216,7 @@ namespace SolutionVSIX
                 ConfigurationManager.RefreshSection("appSettings");
             }
 
-            OutputText("已切换到正式环境！");
+            OutputTextToStatusbar("已切换到正式环境！");
         }
 
         private void ChangeFoowwEnvironmentToTest(object sender, EventArgs e)
@@ -212,7 +247,7 @@ namespace SolutionVSIX
                 ConfigurationManager.RefreshSection("appSettings");
             }
 
-            OutputText("已切换到测试环境！");
+            OutputTextToStatusbar("已切换到测试环境！");
         }
 
         private void ReplaceFoowwDatabase(object sender, EventArgs e)
@@ -243,7 +278,7 @@ namespace SolutionVSIX
                 }
                 Directory.Delete(tempDirectoryPath, true);
 
-                OutputText("空白库替换成功！");
+                OutputTextToStatusbar("空白库替换成功！");
             }
             catch (Exception ex)
             {
@@ -251,6 +286,53 @@ namespace SolutionVSIX
             }
         }
 
+        private void PrintFoowwLogToOutputWindow(object sender, EventArgs e)
+        {
+            try
+            {
+                ThreadHelper.ThrowIfNotOnUIThread();
+                // 状态栏提示
+                string message = "已开启打印Log到输出窗口！Log有更新时，会实时打印到输出窗口！";
+                OutputTextToStatusbar(message);
+                m_fileWatcher.Path = GetStartupProjectDirectoryPath() + @"\bin\x86\Debug\Logs\";
+                m_fileWatcher.EnableRaisingEvents = true;
+
+                // 打印最新日志
+                ClearOutputWindowPane();
+                OutputTextToOutputWindowPane(string.Empty, "拉取到最新日志如下：");
+                DirectoryInfo directoryInfo = new DirectoryInfo(m_fileWatcher.Path);
+                FileInfo[] files = directoryInfo.GetFiles();
+                if (files != null && files.Length > 0)
+                {
+                    FileInfo lastWriteFile = directoryInfo.GetFiles().OrderByDescending(a => a.LastWriteTime).First();
+                    PrintLog(lastWriteFile.Name, lastWriteFile.FullName, false);
+                }
+                else
+                {
+                    PrintLog(string.Empty, string.Empty, false);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.InnerException.Message + ex.StackTrace + ex.Message);
+            }
+        }
+
+        private void DisablePrintFoowwLogToOutputWindow(object sender, EventArgs e)
+        {
+            try
+            {
+                ThreadHelper.ThrowIfNotOnUIThread();
+                string message = "已关闭打印Log到输出窗口的功能！";
+                OutputTextToStatusbar(message);
+                OutputTextToOutputWindowPane(string.Empty, message);
+                m_fileWatcher.EnableRaisingEvents = false;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.InnerException.Message + ex.StackTrace + ex.Message);
+            }
+        }
 
         private string GetStartupProjectDirectoryPath()
         {
@@ -273,46 +355,98 @@ namespace SolutionVSIX
             return new FileInfo(project.FileName).DirectoryName;
         }
 
-        /// <summary>
-        /// 创建输出窗体
-        /// </summary>
-        /// <param name="paneGuid">自定义ID</param>
-        /// <param name="title">输出窗口的类型</param>
-        /// <param name="visible">是否最初可见</param>
-        /// <param name="clearWithSolution">关闭解决方案时清空</param>
-        private void CreatePane(Guid paneGuid, string title, bool visible, bool clearWithSolution)
+        private void InitFileWatcher()
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
-
-            IVsOutputWindow output = (IVsOutputWindow)Package.GetGlobalService(typeof(SVsOutputWindow));
-
-            // Create a new pane.  
-            // 参考：https://docs.microsoft.com/zh-cn/dotnet/api/microsoft.visualstudio.shell.interop.ivsoutputwindow.createpane?view=visualstudiosdk-2019
-            output.CreatePane(
-                ref paneGuid,
-                title,
-                Convert.ToInt32(visible),
-                Convert.ToInt32(clearWithSolution));
+            m_fileWatcher = new FileSystemWatcher();
+            m_fileWatcher.NotifyFilter = NotifyFilters.LastWrite;
+            m_fileWatcher.Filter = "*.txt";
+            m_fileWatcher.Changed += OnFileWatcherChanged;
+            m_fileWatcher.IncludeSubdirectories = false;
+            m_fileWatcher.EnableRaisingEvents = false;
         }
 
-        private void OutputText(string text)
+        private void OnFileWatcherChanged(object sender, FileSystemEventArgs e)
+        {
+            if (e.ChangeType != WatcherChangeTypes.Changed)
+            {
+                return;
+            }
+            // UI线程执行
+            ThreadHelper.Generic.BeginInvoke(() =>
+            {
+                OutputTextToStatusbar($"[{DateTime.Now}]文件[{e.Name}]" + "有新日志产生，请查看FoowwSoftLog输出窗口！！！");
+                PrintLog(e.Name, e.FullPath);
+            });
+        }
+
+        private void PrintLog(string fileName, string fileFullPath, bool isClearOutputWindowPane = true)
+        {
+            if (isClearOutputWindowPane)
+            {
+                ClearOutputWindowPane();
+            }
+            
+            if (!string.IsNullOrWhiteSpace(fileName) && !string.IsNullOrWhiteSpace(fileFullPath))
+            {
+                string text = System.IO.File.ReadAllText(fileFullPath);
+                OutputTextToOutputWindowPane($"   日志文件：{fileName}", text);
+            }
+            else
+            {
+                OutputTextToOutputWindowPane(string.Empty, string.Empty);
+            }
+        }
+
+        /// <summary>
+        /// 输出到 自定义的输出窗口
+        /// </summary>
+        /// <param name="title"></param>
+        /// <param name="text"></param>
+        private void OutputTextToOutputWindowPane(string title, string text)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
             IVsOutputWindow output = (IVsOutputWindow)Package.GetGlobalService(typeof(SVsOutputWindow));
             output.GetPane(CustomOutputWindowPane, out IVsOutputWindowPane pane);
+            pane.Activate(); // 如果窗口被隐藏了,则可以激活显示;如果本身输出窗口就没有打开,该方法并不会强制打开输出窗口
 
             if (string.IsNullOrWhiteSpace(text))
             {
                 return;
             }
-
-            pane.OutputString("-------------------------------------------------------");
             pane.OutputString("\r\n");
-            pane.OutputString($"Output DateTime:{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}");
+            pane.OutputString($"=========================输出时间：{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}{title}=========================");
             pane.OutputString("\r\n");
             pane.OutputString(text);
             pane.OutputString("\r\n");
+            pane.OutputString("==============================================END===============================================");
+        }
+
+        /// <summary>
+        /// 清空输出窗口
+        /// </summary>
+        private void ClearOutputWindowPane()
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            IVsOutputWindow output = (IVsOutputWindow)Package.GetGlobalService(typeof(SVsOutputWindow));
+            output.GetPane(CustomOutputWindowPane, out IVsOutputWindowPane pane);
+
+            pane.Clear();
+        }
+
+        /// <summary>
+        /// 输出到 状态栏
+        /// </summary>
+        /// <param name="text"></param>
+        private void OutputTextToStatusbar(string text)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
+            // 状态栏：https://docs.microsoft.com/zh-cn/visualstudio/extensibility/ux-guidelines/notifications-and-progress-for-visual-studio?view=vs-2019
+            IVsStatusbar statusBar = (IVsStatusbar)ServiceProvider.GetServiceAsync(typeof(SVsStatusbar)).Result;
+            
+            //这个方法设置了颜色也不管用，参考官网
+            statusBar.SetColorText(text, 0, 0);
         }
     }
 }

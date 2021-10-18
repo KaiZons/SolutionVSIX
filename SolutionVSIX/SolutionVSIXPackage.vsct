@@ -101,6 +101,20 @@
           <ButtonText>打开Log</ButtonText>
         </Strings>
       </Button>
+	   <Button guid="guidSolutionVSIXPackageCmdSet" id="PrintFoowwLogToOutputWindow" priority="0x0102" type="Button">
+		<Parent guid="guidSolutionVSIXPackageCmdSet" id="MyMenuGroup" />
+		<Icon guid="foowwIcon" id="foowwIcon1" />
+		<Strings>
+			<ButtonText>开启打印Log到输出窗口</ButtonText>
+		</Strings>
+	   </Button>
+	   <Button guid="guidSolutionVSIXPackageCmdSet" id="DisablePrintFoowwLogToOutputWindow" priority="0x0103" type="Button">
+		<Parent guid="guidSolutionVSIXPackageCmdSet" id="MyMenuGroup" />
+		<Icon guid="foowwIcon" id="foowwIcon1" />
+		<Strings>
+			<ButtonText>关闭打印Log到输出窗口</ButtonText>
+		</Strings>
+	   </Button>
     </Buttons>
 
     <!--The bitmaps section is used to define the bitmaps that are used for the commands.-->
@@ -129,6 +143,8 @@
       <IDSymbol name="ChangeFoowwEnvironmentToFormal" value="0x0104" />
       <IDSymbol name="ChangeFoowwEnvironmentToTest" value="0x0105" />
       <IDSymbol name="ReplaceFoowwDatabase" value="0x0106" />
+	  <IDSymbol name="PrintFoowwLogToOutputWindow" value="0x0107" />
+	  <IDSymbol name="DisablePrintFoowwLogToOutputWindow" value="0x0108" />
       <IDSymbol value="4129" name="cmdidProjectPropertiesToolWindowCommand" />
     </GuidSymbol>
 
